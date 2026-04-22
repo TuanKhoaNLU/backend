@@ -2,7 +2,10 @@ package com.quizweb.backend.auth;
 
 import com.quizweb.backend.auth.dto.LoginRequest;
 import com.quizweb.backend.auth.dto.LoginResponse;
+import com.quizweb.backend.auth.dto.RegisterRequest;
+import com.quizweb.backend.auth.dto.RegisterResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,5 +33,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
 }

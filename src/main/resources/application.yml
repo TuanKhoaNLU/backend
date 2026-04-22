@@ -18,6 +18,3 @@ app:
   jwt:
     secret: change-this-secret-key-to-a-long-random-value
     expiration-ms: 86400000
-  auth:
-    demo-username: admin
-    demo-password: admin123
