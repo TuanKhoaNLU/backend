@@ -3,6 +3,8 @@ package com.quizweb.backend.quiz;
 import jakarta.persistence.Column;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -25,8 +27,15 @@ public class Quiz {
     @Column(nullable = false, length = 150)
     private String title;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private QuizMode mode = QuizMode.NORMAL;
+
     @Column(nullable = false)
     private boolean published = true;
+
+    @Column
+    private Integer totalTimeLimitSeconds;
 
     @Column(length = 50)
     private String createdBy;
@@ -60,12 +69,28 @@ public class Quiz {
         this.title = title;
     }
 
+    public QuizMode getMode() {
+        return mode;
+    }
+
+    public void setMode(QuizMode mode) {
+        this.mode = mode;
+    }
+
     public boolean isPublished() {
         return published;
     }
 
     public void setPublished(boolean published) {
         this.published = published;
+    }
+
+    public Integer getTotalTimeLimitSeconds() {
+        return totalTimeLimitSeconds;
+    }
+
+    public void setTotalTimeLimitSeconds(Integer totalTimeLimitSeconds) {
+        this.totalTimeLimitSeconds = totalTimeLimitSeconds;
     }
 
     public Instant getCreatedAt() {

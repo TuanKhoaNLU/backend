@@ -23,6 +23,7 @@ public class CreateQuizSlideRequest {
     private List<Integer> correctOptionIndexes;
     private List<String> orderingItems;
     private List<String> acceptedAnswers;
+    private Integer timeLimitSeconds;
 
     public SlideType getType() {
         return type;
@@ -78,5 +79,13 @@ public class CreateQuizSlideRequest {
 
     public void setAcceptedAnswers(List<String> acceptedAnswers) {
         this.acceptedAnswers = acceptedAnswers;
+    }
+
+    public Integer getTimeLimitSeconds() {
+        return timeLimitSeconds;
+    }
+
+    public void setTimeLimitSeconds(Integer timeLimitSeconds) {
+        this.timeLimitSeconds = timeLimitSeconds;
     }
 }

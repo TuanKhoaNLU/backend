@@ -10,6 +10,7 @@ public record QuizSlideDetailResponse(
         SlideType type,
         String question,
         String imageUrl,
+        Integer timeLimitSeconds,
         List<String> options,
         List<Integer> correctOptionIndexes,
         List<String> orderingItems,
