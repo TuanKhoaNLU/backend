@@ -33,7 +33,7 @@ public class QuizService {
 
     public List<QuizSummaryResponse> getPublicQuizzes() {
         return quizRepository.findByPublishedTrueOrderByIdAsc().stream()
-                .map(quiz -> new QuizSummaryResponse(quiz.getId(), quiz.getTitle(), quiz.isPublished()))
+                .map(quiz -> new QuizSummaryResponse(quiz.getId(), quiz.getTitle(), quiz.isPublished(), quiz.getMode()))
                 .toList();
     }
 
@@ -49,7 +49,15 @@ public class QuizService {
                 .sorted(java.util.Comparator.comparingInt(QuizSlide::getPositionIndex))
                 .map(this::toSlideDetailResponse)
                 .toList();
-        return new QuizDetailResponse(quiz.getId(), quiz.getTitle(), quiz.isPublished(), quiz.getCreatedBy(), slides);
+        return new QuizDetailResponse(
+                quiz.getId(),
+                quiz.getTitle(),
+                quiz.isPublished(),
+                quiz.getMode(),
+                quiz.getTotalTimeLimitSeconds(),
+                quiz.getCreatedBy(),
+                slides
+        );
     }
 
     @Transactional
@@ -58,6 +66,7 @@ public class QuizService {
         quiz.setTitle(request.getTitle().trim());
         quiz.setPublished(request.getPublished() == null || request.getPublished());
         quiz.setCreatedBy(username);
+        applyQuizTimingSettings(request, quiz);
 
         int position = 1;
         for (CreateQuizSlideRequest slideRequest : request.getSlides()) {
@@ -81,6 +90,7 @@ public class QuizService {
         Quiz quiz = getOwnedQuiz(id, username);
         quiz.setTitle(request.getTitle().trim());
         quiz.setPublished(request.getPublished() == null || request.getPublished());
+        applyQuizTimingSettings(request, quiz);
         quiz.getSlides().clear();
 
         int position = 1;
@@ -112,6 +122,7 @@ public class QuizService {
         slide.setType(slideRequest.getType());
         slide.setQuestionText(slideRequest.getQuestion().trim());
         slide.setImageUrl(normalizeNullable(slideRequest.getImageUrl()));
+        applySlideTimingSettings(slideRequest, slide, quiz.getMode());
 
         switch (slideRequest.getType()) {
             case SINGLE_CHOICE -> validateSingleChoice(slideRequest, slide);
@@ -219,7 +230,8 @@ public class QuizService {
                 quiz.getId(),
                 quiz.getTitle(),
                 quiz.isPublished(),
-                quiz.getSlides() == null ? 0 : quiz.getSlides().size()
+                quiz.getSlides() == null ? 0 : quiz.getSlides().size(),
+                quiz.getMode()
         );
     }
 
@@ -231,6 +243,7 @@ public class QuizService {
                     slide.getType(),
                     slide.getQuestionText(),
                     slide.getImageUrl(),
+                    slide.getTimeLimitSeconds(),
                     readStringList(slide.getOptionsJson()),
                     readIntegerList(slide.getCorrectAnswersJson()),
                     null,
@@ -242,6 +255,7 @@ public class QuizService {
                     slide.getType(),
                     slide.getQuestionText(),
                     slide.getImageUrl(),
+                    slide.getTimeLimitSeconds(),
                     null,
                     null,
                     readStringList(slide.getOptionsJson()),
@@ -253,12 +267,42 @@ public class QuizService {
                     slide.getType(),
                     slide.getQuestionText(),
                     slide.getImageUrl(),
+                    slide.getTimeLimitSeconds(),
                     null,
                     null,
                     null,
                     readStringList(slide.getCorrectAnswersJson())
             );
         };
+    }
+
+    private void applyQuizTimingSettings(CreateQuizRequest request, Quiz quiz) {
+        QuizMode mode = request.getMode() == null ? QuizMode.NORMAL : request.getMode();
+        quiz.setMode(mode);
+        if (mode == QuizMode.NORMAL) {
+            Integer totalLimit = request.getTotalTimeLimitSeconds();
+            if (totalLimit != null && totalLimit < 10) {
+                throw new ConflictException("Normal mode total time limit must be at least 10 seconds");
+            }
+            quiz.setTotalTimeLimitSeconds(totalLimit);
+        } else {
+            quiz.setTotalTimeLimitSeconds(null);
+        }
+    }
+
+    private void applySlideTimingSettings(CreateQuizSlideRequest request, QuizSlide slide, QuizMode mode) {
+        if (mode != QuizMode.TIME) {
+            slide.setTimeLimitSeconds(null);
+            return;
+        }
+        Integer limit = request.getTimeLimitSeconds();
+        if (limit == null) {
+            throw new ConflictException("Time mode requires time limit per slide");
+        }
+        if (limit < 10 || limit > 30) {
+            throw new ConflictException("Time mode slide time limit must be from 10 to 30 seconds");
+        }
+        slide.setTimeLimitSeconds(limit);
     }
 
     private List<String> readStringList(String json) {

@@ -38,6 +38,9 @@ public class QuizSlide {
     @Column(length = 500)
     private String imageUrl;
 
+    @Column
+    private Integer timeLimitSeconds;
+
     @Lob
     @Column(columnDefinition = "TEXT")
     private String optionsJson;
@@ -92,6 +95,14 @@ public class QuizSlide {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public Integer getTimeLimitSeconds() {
+        return timeLimitSeconds;
+    }
+
+    public void setTimeLimitSeconds(Integer timeLimitSeconds) {
+        this.timeLimitSeconds = timeLimitSeconds;
     }
 
     public String getOptionsJson() {
