@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/quiz_web_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    url: jdbc:mysql://trolley.proxy.rlwy.net:36263/railway?useSSL=true&requireSSL=true&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: qgUtgJyvdvMQXdNYcFYlgAGYyVRxcjWr
   jpa:
     hibernate:
       ddl-auto: update
@@ -16,5 +16,5 @@ spring:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:change-this-secret-key-to-a-long-random-value}
-    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+    secret: huh2378r7hf02DFWU0FDVgcgvdS28LOP029k3KƠDJdWKD323rdfj321sdavbkSV
+    expiration-ms: 86400000
