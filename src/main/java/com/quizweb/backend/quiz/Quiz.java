@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
@@ -43,6 +44,35 @@ public class Quiz {
     @Column(nullable = false)
     private Instant createdAt;
 
+    @Column(nullable = false)
+    private Instant updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private QuizLifecycleStatus lifecycleStatus = QuizLifecycleStatus.PUBLISHED;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private QuizAccessScope accessScope = QuizAccessScope.PUBLIC;
+
+    @Column(length = 80)
+    private String slug;
+
+    @Column(length = 1000)
+    private String description;
+
+    @Column
+    private Instant publishedAt;
+
+    @Column(nullable = false)
+    private boolean practiceEnabled = true;
+
+    @Column(nullable = false)
+    private boolean liveEnabled = true;
+
+    @Column
+    private Integer maxAttemptsPerUser;
+
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuizSlide> slides = new ArrayList<>();
 
@@ -50,6 +80,20 @@ public class Quiz {
     void prePersist() {
         if (createdAt == null) {
             createdAt = Instant.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = createdAt;
+        }
+        if (published && publishedAt == null) {
+            publishedAt = Instant.now();
+        }
+    }
+
+    @PreUpdate
+    void preUpdate() {
+        updatedAt = Instant.now();
+        if (published && publishedAt == null) {
+            publishedAt = updatedAt;
         }
     }
 
@@ -101,12 +145,84 @@ public class Quiz {
         this.createdAt = createdAt;
     }
 
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public String getCreatedBy() {
         return createdBy;
     }
 
     public void setCreatedBy(String createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public QuizLifecycleStatus getLifecycleStatus() {
+        return lifecycleStatus;
+    }
+
+    public void setLifecycleStatus(QuizLifecycleStatus lifecycleStatus) {
+        this.lifecycleStatus = lifecycleStatus;
+    }
+
+    public QuizAccessScope getAccessScope() {
+        return accessScope;
+    }
+
+    public void setAccessScope(QuizAccessScope accessScope) {
+        this.accessScope = accessScope;
+    }
+
+    public String getSlug() {
+        return slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Instant getPublishedAt() {
+        return publishedAt;
+    }
+
+    public void setPublishedAt(Instant publishedAt) {
+        this.publishedAt = publishedAt;
+    }
+
+    public boolean isPracticeEnabled() {
+        return practiceEnabled;
+    }
+
+    public void setPracticeEnabled(boolean practiceEnabled) {
+        this.practiceEnabled = practiceEnabled;
+    }
+
+    public boolean isLiveEnabled() {
+        return liveEnabled;
+    }
+
+    public void setLiveEnabled(boolean liveEnabled) {
+        this.liveEnabled = liveEnabled;
+    }
+
+    public Integer getMaxAttemptsPerUser() {
+        return maxAttemptsPerUser;
+    }
+
+    public void setMaxAttemptsPerUser(Integer maxAttemptsPerUser) {
+        this.maxAttemptsPerUser = maxAttemptsPerUser;
     }
 
     public List<QuizSlide> getSlides() {
