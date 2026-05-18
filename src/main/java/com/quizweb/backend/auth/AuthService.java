@@ -4,9 +4,14 @@ import com.quizweb.backend.auth.dto.LoginRequest;
 import com.quizweb.backend.auth.dto.LoginResponse;
 import com.quizweb.backend.auth.dto.RegisterRequest;
 import com.quizweb.backend.auth.dto.RegisterResponse;
+import com.quizweb.backend.auth.dto.GoogleLoginRequest;
 import com.quizweb.backend.common.exception.ConflictException;
 import com.quizweb.backend.user.UserAccount;
 import com.quizweb.backend.user.UserAccountRepository;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,6 +21,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -69,5 +77,43 @@ public class AuthService {
         userAccountRepository.save(account);
 
         return new RegisterResponse("Registered successfully", username);
+    }
+
+    @Transactional
+    public LoginResponse loginWithGoogle(GoogleLoginRequest request) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+                    .setAudience(Collections.singletonList("toan-9072e"))
+                    .setIssuer("https://securetoken.google.com/toan-9072e")
+                    .setPublicCertsEncodedUrl("https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com")
+                    .build();
+
+            GoogleIdToken idToken = verifier.verify(request.token());
+            if (idToken != null) {
+                GoogleIdToken.Payload payload = idToken.getPayload();
+                String email = payload.getEmail();
+                
+                // fallback to subject if email is not present
+                if (email == null || email.isEmpty()) {
+                    email = payload.getSubject();
+                }
+
+                UserAccount account = userAccountRepository.findByUsernameIgnoreCase(email).orElse(null);
+                if (account == null) {
+                    account = new UserAccount();
+                    account.setUsername(email);
+                    account.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
+                    account.setRole("USER");
+                    userAccountRepository.save(account);
+                }
+
+                String token = jwtService.generateToken(account.getUsername());
+                return new LoginResponse(token, "Bearer", jwtExpirationMs);
+            } else {
+                throw new BadCredentialsException("Invalid Google token");
+            }
+        } catch (Exception e) {
+            throw new BadCredentialsException("Failed to verify Google token: " + e.getMessage());
+        }
     }
 }
