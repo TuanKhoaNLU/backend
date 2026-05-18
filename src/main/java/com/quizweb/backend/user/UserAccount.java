@@ -27,6 +27,15 @@ public class UserAccount {
     @Column(nullable = false, length = 20)
     private String role = "USER";
 
+    @Column(length = 100)
+    private String fullName;
+
+    @Column(length = 20)
+    private String phoneNumber;
+
+    @Column(columnDefinition = "LONGTEXT")
+    private String avatarUrl;
+
     @Column(nullable = false)
     private Instant createdAt;
 
@@ -75,5 +84,29 @@ public class UserAccount {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 }
