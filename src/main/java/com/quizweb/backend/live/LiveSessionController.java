@@ -4,11 +4,13 @@ import com.quizweb.backend.live.dto.CreateLiveSessionRequest;
 import com.quizweb.backend.live.dto.JoinLiveSessionRequest;
 import com.quizweb.backend.live.dto.JoinLiveSessionResponse;
 import com.quizweb.backend.live.dto.LiveLeaderboardEntryResponse;
+import com.quizweb.backend.live.dto.LiveRoomBroadcast;
 import com.quizweb.backend.live.dto.LiveSessionStateResponse;
 import com.quizweb.backend.live.dto.SubmitLiveAnswerRequest;
 import com.quizweb.backend.live.dto.SubmitLiveAnswerResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,9 +26,12 @@ import java.util.List;
 public class LiveSessionController {
 
     private final LiveSessionService liveSessionService;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public LiveSessionController(LiveSessionService liveSessionService) {
+    public LiveSessionController(LiveSessionService liveSessionService,
+                                 SimpMessagingTemplate messagingTemplate) {
         this.liveSessionService = liveSessionService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @PostMapping
@@ -34,12 +39,17 @@ public class LiveSessionController {
             @Valid @RequestBody CreateLiveSessionRequest request,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(liveSessionService.createSession(request, authentication.getName()));
+        LiveSessionStateResponse state = liveSessionService.createSession(request, authentication.getName());
+        broadcastRoomState(state);
+        return ResponseEntity.ok(state);
     }
 
     @PostMapping("/join")
     public ResponseEntity<JoinLiveSessionResponse> joinByPin(@Valid @RequestBody JoinLiveSessionRequest request) {
-        return ResponseEntity.ok(liveSessionService.joinByPin(request));
+        JoinLiveSessionResponse joinResponse = liveSessionService.joinByPin(request);
+        // Broadcast trạng thái phòng mới (bao gồm danh sách người chơi đã cập nhật) tới tất cả client
+        broadcastRoomState(joinResponse.session());
+        return ResponseEntity.ok(joinResponse);
     }
 
     @PostMapping("/{sessionId}/start")
@@ -47,7 +57,9 @@ public class LiveSessionController {
             @PathVariable Long sessionId,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(liveSessionService.startSession(sessionId, authentication.getName()));
+        LiveSessionStateResponse state = liveSessionService.startSession(sessionId, authentication.getName());
+        broadcastRoomState(state);
+        return ResponseEntity.ok(state);
     }
 
     @PostMapping("/{sessionId}/next")
@@ -55,7 +67,9 @@ public class LiveSessionController {
             @PathVariable Long sessionId,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(liveSessionService.nextQuestion(sessionId, authentication.getName()));
+        LiveSessionStateResponse state = liveSessionService.nextQuestion(sessionId, authentication.getName());
+        broadcastRoomState(state);
+        return ResponseEntity.ok(state);
     }
 
     @PostMapping("/{sessionId}/end")
@@ -63,7 +77,9 @@ public class LiveSessionController {
             @PathVariable Long sessionId,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(liveSessionService.endSession(sessionId, authentication.getName()));
+        LiveSessionStateResponse state = liveSessionService.endSession(sessionId, authentication.getName());
+        broadcastRoomState(state);
+        return ResponseEntity.ok(state);
     }
 
     @GetMapping("/{sessionId}")
@@ -76,11 +92,22 @@ public class LiveSessionController {
             @PathVariable Long sessionId,
             @Valid @RequestBody SubmitLiveAnswerRequest request
     ) {
-        return ResponseEntity.ok(liveSessionService.submitAnswer(sessionId, request));
+        SubmitLiveAnswerResponse response = liveSessionService.submitAnswer(sessionId, request);
+        // Sau khi gửi đáp án, broadcast leaderboard cập nhật cho cả phòng
+        LiveSessionStateResponse state = liveSessionService.getSessionState(sessionId);
+        broadcastRoomState(state);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{sessionId}/leaderboard")
     public ResponseEntity<List<LiveLeaderboardEntryResponse>> leaderboard(@PathVariable Long sessionId) {
         return ResponseEntity.ok(liveSessionService.getLeaderboard(sessionId));
+    }
+
+    // ─── Helper: broadcast trạng thái phòng kèm leaderboard tới /topic/room/{pin} ───
+    private void broadcastRoomState(LiveSessionStateResponse state) {
+        List<LiveLeaderboardEntryResponse> leaderboard = liveSessionService.getLeaderboard(state.sessionId());
+        LiveRoomBroadcast payload = new LiveRoomBroadcast(state, leaderboard);
+        messagingTemplate.convertAndSend("/topic/room/" + state.pin(), payload);
     }
 }

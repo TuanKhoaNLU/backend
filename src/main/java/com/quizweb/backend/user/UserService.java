@@ -34,7 +34,10 @@ public class UserService {
         
         account.setFullName(request.fullName());
         account.setPhoneNumber(request.phoneNumber());
-        account.setAvatarUrl(request.avatarUrl());
+        // Chỉ cập nhật avatar khi có giá trị mới (null = giữ nguyên ảnh cũ)
+        if (request.avatarUrl() != null) {
+            account.setAvatarUrl(request.avatarUrl());
+        }
         
         userAccountRepository.save(account);
         

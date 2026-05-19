@@ -33,7 +33,7 @@ public class UserAccount {
     @Column(length = 20)
     private String phoneNumber;
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(length = 500)
     private String avatarUrl;
 
     @Column(nullable = false)
