@@ -51,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers(antMatcher(HttpMethod.GET, "/api/live/sessions/*")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.GET, "/api/live/sessions/*/leaderboard")).permitAll()
                         .requestMatchers(antMatcher("/actuator/health")).permitAll()
+                        .requestMatchers(antMatcher("/ws/**")).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
