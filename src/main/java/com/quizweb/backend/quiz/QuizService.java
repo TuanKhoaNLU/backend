@@ -332,33 +332,4 @@ public class QuizService {
             throw new ConflictException("Could not parse slide integer data");
         }
     }
-
-    @Service
-    static class QuizDataSeeder implements CommandLineRunner {
-
-        private final QuizRepository quizRepository;
-
-        QuizDataSeeder(QuizRepository quizRepository) {
-            this.quizRepository = quizRepository;
-        }
-
-        @Override
-        public void run(String... args) {
-            if (quizRepository.count() > 0) {
-                return;
-            }
-
-            Quiz javaBasics = new Quiz();
-            javaBasics.setTitle("Java Basics");
-            javaBasics.setPublished(true);
-            javaBasics.setCreatedBy("system");
-
-            Quiz springIntro = new Quiz();
-            springIntro.setTitle("Spring Boot Intro");
-            springIntro.setPublished(true);
-            springIntro.setCreatedBy("system");
-
-            quizRepository.saveAll(List.of(javaBasics, springIntro));
-        }
-    }
 }
