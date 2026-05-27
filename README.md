@@ -1,6 +1,6 @@
 # Quiz Web - BackEnd
 
-Đây là mã nguồn phía máy chủ (BackEnd) cho ứng dụng trắc nghiệm (Quiz Web). Dự án được xây dựng bằng Java và Spring Boot, cung cấp các API để quản lý người dùng, bài thi trắc nghiệm và các phòng chơi trực tuyến.
+Đây là mã nguồn phía máy chủ (BackEnd) cho ứng dụng trắc nghiệm (Quiz Web). Dự án được xây dựng bằng Java và Spring Boot, cung cấp các API để quản lý người dùng và bài thi trắc nghiệm.
 
 ## Yêu cầu hệ thống
 - Java 17

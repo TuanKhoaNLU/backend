@@ -67,9 +67,6 @@ public class Quiz {
     @Column(nullable = false)
     private boolean practiceEnabled = true;
 
-    @Column(nullable = false)
-    private boolean liveEnabled = true;
-
     @Column
     private Integer maxAttemptsPerUser;
 
@@ -207,14 +204,6 @@ public class Quiz {
 
     public void setPracticeEnabled(boolean practiceEnabled) {
         this.practiceEnabled = practiceEnabled;
-    }
-
-    public boolean isLiveEnabled() {
-        return liveEnabled;
-    }
-
-    public void setLiveEnabled(boolean liveEnabled) {
-        this.liveEnabled = liveEnabled;
     }
 
     public Integer getMaxAttemptsPerUser() {

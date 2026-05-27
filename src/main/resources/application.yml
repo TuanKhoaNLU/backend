@@ -18,3 +18,7 @@ app:
   jwt:
     secret: huh2378r7hf02DFWU0FDVgcgvdS28LOP029k3KƠDJdWKD323rdfj321sdavbkSV
     expiration-ms: 86400000
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+    api-key: ${CLOUDINARY_API_KEY:}
+    api-secret: ${CLOUDINARY_API_SECRET:}

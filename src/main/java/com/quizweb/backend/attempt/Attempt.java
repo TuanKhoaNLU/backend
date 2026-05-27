@@ -1,6 +1,5 @@
 package com.quizweb.backend.attempt;
 
-import com.quizweb.backend.live.LiveSession;
 import com.quizweb.backend.quiz.Quiz;
 import com.quizweb.backend.user.UserAccount;
 import jakarta.persistence.Column;
@@ -25,8 +24,7 @@ import java.time.Instant;
         indexes = {
                 @Index(name = "idx_attempt_quiz_submitted", columnList = "quiz_id,submittedAt"),
                 @Index(name = "idx_attempt_username_quiz", columnList = "username,quiz_id"),
-                @Index(name = "idx_attempt_user_quiz", columnList = "user_id,quiz_id"),
-                @Index(name = "idx_attempt_live_session", columnList = "live_session_id")
+                @Index(name = "idx_attempt_user_quiz", columnList = "user_id,quiz_id")
         }
 )
 public class Attempt {
@@ -45,10 +43,6 @@ public class Attempt {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserAccount user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "live_session_id")
-    private LiveSession liveSession;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -115,14 +109,6 @@ public class Attempt {
 
     public void setUser(UserAccount user) {
         this.user = user;
-    }
-
-    public LiveSession getLiveSession() {
-        return liveSession;
-    }
-
-    public void setLiveSession(LiveSession liveSession) {
-        this.liveSession = liveSession;
     }
 
     public AttemptMode getMode() {

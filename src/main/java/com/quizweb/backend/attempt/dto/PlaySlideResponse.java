@@ -12,6 +12,9 @@ public record PlaySlideResponse(
         String imageUrl,
         Integer timeLimitSeconds,
         Integer revealDurationMs,
-        List<String> options
+        List<String> options,
+        List<Integer> correctOptionIndexes,
+        List<String> correctOrderingItems,
+        List<String> acceptedAnswers
 ) {
 }

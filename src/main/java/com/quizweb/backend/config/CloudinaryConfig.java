@@ -2,12 +2,14 @@ package com.quizweb.backend.config;
 
 import com.cloudinary.Cloudinary;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
 
 @Configuration
+@ConditionalOnExpression("!'${app.cloudinary.cloud-name:}'.isBlank()")
 public class CloudinaryConfig {
 
     @Value("${app.cloudinary.cloud-name}")

@@ -46,12 +46,7 @@ public class SecurityConfig {
                         .requestMatchers(antMatcher(HttpMethod.GET, "/api/attempts/leaderboard/**")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.POST, "/api/attempts/submit")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.POST, "/api/attempts/preview")).permitAll()
-                        .requestMatchers(antMatcher(HttpMethod.POST, "/api/live/sessions/join")).permitAll()
-                        .requestMatchers(antMatcher(HttpMethod.POST, "/api/live/sessions/*/answers")).permitAll()
-                        .requestMatchers(antMatcher(HttpMethod.GET, "/api/live/sessions/*")).permitAll()
-                        .requestMatchers(antMatcher(HttpMethod.GET, "/api/live/sessions/*/leaderboard")).permitAll()
                         .requestMatchers(antMatcher("/actuator/health")).permitAll()
-                        .requestMatchers(antMatcher("/ws/**")).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

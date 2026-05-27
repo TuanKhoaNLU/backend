@@ -2,6 +2,7 @@ package com.quizweb.backend.common;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,6 +15,7 @@ import java.util.Map;
  * với nhận diện khuôn mặt (g_face), tối ưu chất lượng và format tự động.
  */
 @Service
+@ConditionalOnExpression("!'${app.cloudinary.cloud-name:}'.isBlank()")
 public class CloudinaryService {
 
     private final Cloudinary cloudinary;

@@ -3,6 +3,7 @@ package com.quizweb.backend.user;
 import com.quizweb.backend.common.CloudinaryService;
 import com.quizweb.backend.user.dto.UpdateProfileRequest;
 import com.quizweb.backend.user.dto.UserProfileResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +16,10 @@ public class UserController {
     private final UserService userService;
     private final CloudinaryService cloudinaryService;
 
-    public UserController(UserService userService, CloudinaryService cloudinaryService) {
+    public UserController(
+            UserService userService,
+            @Autowired(required = false) CloudinaryService cloudinaryService
+    ) {
         this.userService = userService;
         this.cloudinaryService = cloudinaryService;
     }
@@ -51,7 +55,12 @@ public class UserController {
         // Quyết định avatarUrl cuối cùng
         String resolvedAvatarUrl;
         if (avatarFile != null && !avatarFile.isEmpty()) {
-            // Upload file thật lên Cloudinary, nhận lại HTTPS URL ngắn
+            if (cloudinaryService == null) {
+                throw new IllegalStateException(
+                        "Cloudinary chưa được cấu hình. Đặt CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET "
+                                + "hoặc chọn avatar Dicebear (avatarUrl) thay vì upload file."
+                );
+            }
             resolvedAvatarUrl = cloudinaryService.uploadFile(avatarFile);
         } else if (avatarUrl != null && !avatarUrl.isBlank()) {
             // Người dùng chọn ảnh Dicebear có sẵn → dùng URL trực tiếp

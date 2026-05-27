@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -157,6 +158,11 @@ public class AttemptService {
         long effectiveDuration = Math.max(0L, totalDurationMs);
         long normalLimitMs = quiz.getTotalTimeLimitSeconds() == null ? Long.MAX_VALUE : quiz.getTotalTimeLimitSeconds() * 1000L;
 
+        // Cache đáp án đúng đã parse JSON để tránh parse lặp lại mỗi lần chấm.
+        Map<Long, Set<Integer>> expectedChoiceCache = new HashMap<>();
+        Map<Long, List<String>> expectedOrderingCache = new HashMap<>();
+        Map<Long, Set<String>> expectedTextCache = new HashMap<>();
+
         for (QuizSlide slide : slides) {
             AnswerSubmissionRequest answer = answerMap.get(slide.getId());
             if (answer == null) {
@@ -167,7 +173,13 @@ public class AttemptService {
                 continue;
             }
 
-            boolean isCorrect = evaluateSlideAnswer(slide, answer);
+            boolean isCorrect = evaluateSlideAnswer(
+                    slide,
+                    answer,
+                    expectedChoiceCache,
+                    expectedOrderingCache,
+                    expectedTextCache
+            );
             if (!isCorrect) {
                 continue;
             }
@@ -198,37 +210,51 @@ public class AttemptService {
         return Math.max(MIN_TIME_MODE_SCORE, Math.min(MAX_TIME_MODE_SCORE, computed));
     }
 
-    private boolean evaluateSlideAnswer(QuizSlide slide, AnswerSubmissionRequest answer) {
+    private boolean evaluateSlideAnswer(
+            QuizSlide slide,
+            AnswerSubmissionRequest answer,
+            Map<Long, Set<Integer>> expectedChoiceCache,
+            Map<Long, List<String>> expectedOrderingCache,
+            Map<Long, Set<String>> expectedTextCache
+    ) {
         return switch (slide.getType()) {
-            case SINGLE_CHOICE, MULTI_CHOICE -> matchChoiceAnswer(slide, answer);
-            case ORDERING -> matchOrderingAnswer(slide, answer);
-            case TEXT -> matchTextAnswer(slide, answer);
+            case SINGLE_CHOICE, MULTI_CHOICE -> {
+                Set<Integer> expected = expectedChoiceCache.computeIfAbsent(slide.getId(), id -> {
+                    List<Integer> parsed = readIntegerList(slide.getCorrectAnswersJson());
+                    return new LinkedHashSet<>(parsed);
+                });
+
+                List<Integer> actual = answer.getSelectedOptionIndexes() == null ? List.of() : answer.getSelectedOptionIndexes();
+                Set<Integer> actualSet = new LinkedHashSet<>(actual);
+                yield expected.equals(actualSet);
+            }
+            case ORDERING -> {
+                List<String> expected = expectedOrderingCache.computeIfAbsent(slide.getId(), id ->
+                        normalize(readStringList(slide.getCorrectAnswersJson()))
+                );
+                List<String> actual = normalize(answer.getOrderedItems() == null ? List.of() : answer.getOrderedItems());
+                yield expected.equals(actual);
+            }
+            case TEXT -> {
+                String text = answer.getTextAnswer();
+                if (text == null || text.isBlank()) {
+                    yield false;
+                }
+                String normalizedAnswer = text.trim().toLowerCase();
+
+                Set<String> expected = expectedTextCache.computeIfAbsent(slide.getId(), id -> {
+                    List<String> parsed = readStringList(slide.getCorrectAnswersJson());
+                    Set<String> set = new LinkedHashSet<>();
+                    for (String v : parsed) {
+                        if (v == null) continue;
+                        String n = v.trim().toLowerCase();
+                        if (!n.isBlank()) set.add(n);
+                    }
+                    return set;
+                });
+                yield expected.contains(normalizedAnswer);
+            }
         };
-    }
-
-    private boolean matchChoiceAnswer(QuizSlide slide, AnswerSubmissionRequest answer) {
-        List<Integer> expected = readIntegerList(slide.getCorrectAnswersJson());
-        List<Integer> actual = answer.getSelectedOptionIndexes() == null ? List.of() : answer.getSelectedOptionIndexes();
-        Set<Integer> expectedSet = new LinkedHashSet<>(expected);
-        Set<Integer> actualSet = new LinkedHashSet<>(actual);
-        return expectedSet.equals(actualSet);
-    }
-
-    private boolean matchOrderingAnswer(QuizSlide slide, AnswerSubmissionRequest answer) {
-        List<String> expected = normalize(readStringList(slide.getCorrectAnswersJson()));
-        List<String> actual = normalize(answer.getOrderedItems() == null ? List.of() : answer.getOrderedItems());
-        return expected.equals(actual);
-    }
-
-    private boolean matchTextAnswer(QuizSlide slide, AnswerSubmissionRequest answer) {
-        String text = answer.getTextAnswer();
-        if (text == null || text.isBlank()) {
-            return false;
-        }
-        String normalizedAnswer = text.trim().toLowerCase();
-        return readStringList(slide.getCorrectAnswersJson()).stream()
-                .map(v -> v == null ? "" : v.trim().toLowerCase())
-                .anyMatch(normalizedAnswer::equals);
     }
 
     private PlaySlideResponse toPlaySlide(QuizSlide slide) {
@@ -241,6 +267,17 @@ public class AttemptService {
         int wordCount = slide.getQuestionText() == null ? 0 : slide.getQuestionText().trim().split("\\s+").length;
         int revealDurationMs = (int) Math.ceil((wordCount / (double) QUESTION_REVEAL_WPM) * 60_000.0);
 
+        List<Integer> correctOptionIndexes = switch (slide.getType()) {
+            case SINGLE_CHOICE, MULTI_CHOICE -> readIntegerList(slide.getCorrectAnswersJson());
+            default -> List.of();
+        };
+        List<String> correctOrderingItems = slide.getType() == SlideType.ORDERING
+                ? readStringList(slide.getCorrectAnswersJson())
+                : List.of();
+        List<String> acceptedAnswers = slide.getType() == SlideType.TEXT
+                ? readStringList(slide.getCorrectAnswersJson())
+                : List.of();
+
         return new PlaySlideResponse(
                 slide.getId(),
                 slide.getPositionIndex(),
@@ -249,7 +286,10 @@ public class AttemptService {
                 slide.getImageUrl(),
                 slide.getTimeLimitSeconds(),
                 Math.max(revealDurationMs, 0),
-                options
+                options,
+                correctOptionIndexes,
+                correctOrderingItems,
+                acceptedAnswers
         );
     }
 
