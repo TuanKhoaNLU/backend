@@ -1,5 +1,6 @@
 package com.quizweb.backend.quiz;
 
+import com.quizweb.backend.quiz.dto.AiGenerateRequest;
 import com.quizweb.backend.quiz.dto.CreateQuizRequest;
 import com.quizweb.backend.quiz.dto.CreateQuizResponse;
 import com.quizweb.backend.quiz.dto.MyQuizResponse;
@@ -26,9 +27,11 @@ import java.util.List;
 public class QuizController {
 
     private final QuizService quizService;
+    private final AiQuizService aiQuizService;
 
-    public QuizController(QuizService quizService) {
+    public QuizController(QuizService quizService, AiQuizService aiQuizService) {
         this.quizService = quizService;
+        this.aiQuizService = aiQuizService;
     }
 
     @GetMapping
@@ -42,6 +45,14 @@ public class QuizController {
             Authentication authentication
     ) {
         return ResponseEntity.ok(quizService.createQuiz(request, authentication.getName()));
+    }
+
+    @PostMapping("/generate-ai")
+    public ResponseEntity<CreateQuizResponse> generateQuizWithAi(
+            @Valid @RequestBody AiGenerateRequest request,
+            Authentication authentication
+    ) {
+        return ResponseEntity.ok(aiQuizService.generateQuizWithAi(request, authentication.getName()));
     }
 
     @GetMapping("/mine")
