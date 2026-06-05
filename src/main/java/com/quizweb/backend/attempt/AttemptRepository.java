@@ -9,4 +9,6 @@ public interface AttemptRepository extends JpaRepository<Attempt, Long> {
     List<Attempt> findByQuizIdOrderByScoreDescCorrectCountDescTotalDurationMsAscSubmittedAtAsc(Long quizId);
 
     boolean existsByQuizIdAndUsernameIgnoreCase(Long quizId, String username);
+
+    void deleteByQuizId(Long quizId);
 }

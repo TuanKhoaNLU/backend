@@ -60,7 +60,7 @@ public class AiQuizService {
         quiz.setTitle(request.getQuizTitle().trim());
         quiz.setPublished(true);
         quiz.setCreatedBy(username != null ? username : "system");
-        quiz.setMode(QuizMode.NORMAL);
+        quiz.setMode(QuizMode.TIME); // Chế độ giới hạn thời gian mỗi câu hỏi
         quiz.setLifecycleStatus(QuizLifecycleStatus.PUBLISHED);
         quiz.setAccessScope(QuizAccessScope.PUBLIC);
         
@@ -87,6 +87,7 @@ public class AiQuizService {
             slide.setPositionIndex(position++);
             slide.setType(SlideType.SINGLE_CHOICE);
             slide.setQuestionText(slideDto.getQuestion().trim());
+            slide.setTimeLimitSeconds(request.getTimeLimitSeconds() != null ? request.getTimeLimitSeconds() : 5);
             
             try {
                 slide.setOptionsJson(objectMapper.writeValueAsString(slideDto.getOptions()));
