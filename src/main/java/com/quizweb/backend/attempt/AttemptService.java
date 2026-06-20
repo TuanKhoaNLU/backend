@@ -206,7 +206,8 @@ public class AttemptService {
         if (answer.getElapsedMs() == null || answer.getElapsedMs() > graceLimitMs) {
             return 0;
         }
-        long elapsedMs = Math.min(answer.getElapsedMs(), limitMs);
+        long sanitizedElapsedMs = Math.max(0L, answer.getElapsedMs());
+        long elapsedMs = Math.min(sanitizedElapsedMs, limitMs);
         double ratio = 1.0 - ((double) elapsedMs / (double) limitMs);
         int computed = (int) Math.round(MAX_TIME_MODE_SCORE * ratio);
         return Math.max(MIN_TIME_MODE_SCORE, Math.min(MAX_TIME_MODE_SCORE, computed));
