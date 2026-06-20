@@ -183,17 +183,26 @@ public class AiQuizService {
     }
 
     private String cleanJsonText(String text) {
-        if (text == null) return "[]";
+        if (text == null || text.isBlank()) return "[]";
         String cleaned = text.trim();
-        if (cleaned.startsWith("```json")) {
-            cleaned = cleaned.substring(7);
-        } else if (cleaned.startsWith("```")) {
-            cleaned = cleaned.substring(3);
+        
+        int firstBracket = cleaned.indexOf('[');
+        int firstBrace = cleaned.indexOf('{');
+        int startIndex = (firstBracket != -1 && firstBrace != -1) 
+                ? Math.min(firstBracket, firstBrace) 
+                : Math.max(firstBracket, firstBrace);
+                
+        int lastBracket = cleaned.lastIndexOf(']');
+        int lastBrace = cleaned.lastIndexOf('}');
+        int endIndex = (lastBracket != -1 && lastBrace != -1) 
+                ? Math.max(lastBracket, lastBrace) 
+                : Math.max(lastBracket, lastBrace);
+                
+        if (startIndex != -1 && endIndex != -1 && startIndex < endIndex) {
+            return cleaned.substring(startIndex, endIndex + 1);
         }
-        if (cleaned.endsWith("```")) {
-            cleaned = cleaned.substring(0, cleaned.length() - 3);
-        }
-        return cleaned.trim();
+        
+        return cleaned;
     }
 
     private List<GeneratedSlideDto> generateMockSlides(String topic, int count) {
