@@ -12,6 +12,7 @@ import com.quizweb.backend.quiz.dto.QuizDetailResponse;
 import com.quizweb.backend.quiz.dto.QuizSlideDetailResponse;
 import com.quizweb.backend.quiz.dto.QuizSummaryResponse;
 import com.quizweb.backend.quiz.dto.UpdateQuizRequest;
+import com.quizweb.backend.attempt.AttemptRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,10 +26,12 @@ public class QuizService {
 
     private final QuizRepository quizRepository;
     private final ObjectMapper objectMapper;
+    private final AttemptRepository attemptRepository;
 
-    public QuizService(QuizRepository quizRepository, ObjectMapper objectMapper) {
+    public QuizService(QuizRepository quizRepository, ObjectMapper objectMapper, AttemptRepository attemptRepository) {
         this.quizRepository = quizRepository;
         this.objectMapper = objectMapper;
+        this.attemptRepository = attemptRepository;
     }
 
     public List<QuizSummaryResponse> getPublicQuizzes() {
@@ -112,6 +115,7 @@ public class QuizService {
     @Transactional
     public void deleteQuiz(Long id, String username) {
         Quiz quiz = getOwnedQuiz(id, username);
+        attemptRepository.deleteByQuizId(quiz.getId());
         quizRepository.delete(quiz);
     }
 
