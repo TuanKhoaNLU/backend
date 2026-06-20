@@ -202,10 +202,12 @@ public class AttemptService {
             return 0;
         }
         long limitMs = limitSec * 1000L;
-        if (answer.getElapsedMs() == null || answer.getElapsedMs() > limitMs) {
+        long graceLimitMs = limitMs + 1500L; // 1.5s grace period for client timer latency
+        if (answer.getElapsedMs() == null || answer.getElapsedMs() > graceLimitMs) {
             return 0;
         }
-        double ratio = 1.0 - ((double) answer.getElapsedMs() / (double) limitMs);
+        long elapsedMs = Math.min(answer.getElapsedMs(), limitMs);
+        double ratio = 1.0 - ((double) elapsedMs / (double) limitMs);
         int computed = (int) Math.round(MAX_TIME_MODE_SCORE * ratio);
         return Math.max(MIN_TIME_MODE_SCORE, Math.min(MAX_TIME_MODE_SCORE, computed));
     }
